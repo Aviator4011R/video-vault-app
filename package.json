@@ -1,0 +1,12 @@
+{
+  "name": "video-vault",
+  "version": "1.0.0",
+  "description": "Video Vault - YouTube Video Manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=14.x"
+  }
+}
