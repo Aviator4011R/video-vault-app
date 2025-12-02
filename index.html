@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Vault</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .add-video {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            background: #2a2a2a;
+            border: 2px solid #3a3a3a;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .video-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            background: #2a2a2a;
+        }
+
+        .video-info {
+            padding: 15px;
+        }
+
+        .video-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .video-date {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .delete-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .videos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #2a2a2a;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Video Vault</h1>
+            <p class="subtitle">Save YouTube videos and access them anywhere</p>
+        </header>
+
+        <div class="add-video">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="videoUrl" 
+                    placeholder="Paste YouTube URL here..." 
+                    autocomplete="off"
+                />
+                <button id="addBtn" onclick="addVideo()">Add Video</button>
+            </div>
+            <div id="status"></div>
+        </div>
+
+        <div id="videosContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading your videos...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBL-2k3h9U9YHN5lkMWSLVSeBmdl24yXWk",
+            authDomain: "video-vault-4e0d4.firebaseapp.com",
+            projectId: "video-vault-4e0d4",
+            storageBucket: "video-vault-4e0d4.firebasestorage.app",
+            messagingSenderId: "594295066684",
+            appId: "1:594295066684:web:380d75c734f49739713339",
+            measurementId: "G-P9QRXC6T00"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global variables
+        let videosData = [];
+
+        // Extract YouTube video ID from URL
+        function extractVideoId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+                /^([a-zA-Z0-9_-]{11})$/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) return match[1];
+            }
+            return null;
+        }
+
+        // Get YouTube thumbnail
+        function getYouTubeThumbnail(videoId) {
+            return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Add video to Firebase
+        window.addVideo = async function() {
+            const urlInput = document.getElementById('videoUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showStatus('Please enter a YouTube URL', 'error');
+                return;
+            }
+
+            const videoId = extractVideoId(url);
+            if (!videoId) {
+                showStatus('Invalid YouTube URL', 'error');
+                return;
+            }
+
+            const addBtn = document.getElementById('addBtn');
+            addBtn.disabled = true;
+            addBtn.textContent = 'Adding...';
+
+            try {
+                await addDoc(collection(db, 'videos'), {
+                    videoId: videoId,
+                    url: `https://www.youtube.com/watch?v=${videoId}`,
+                    thumbnail: getYouTubeThumbnail(videoId),
+                    title: `Video ${videoId}`,
+                    addedAt: new Date().toISOString()
+                });
+
+                urlInput.value = '';
+                showStatus('Video added successfully!', 'success');
+            } catch (error) {
+                console.error('Error adding video:', error);
+                showStatus('Failed to add video. Please try again.', 'error');
+            } finally {
+                addBtn.disabled = false;
+                addBtn.textContent = 'Add Video';
+            }
+        };
+
+        // Delete video
+        window.deleteVideo = async function(id, event) {
+            event.stopPropagation();
+            
+            if (!confirm('Are you sure you want to delete this video?')) {
+                return;
+            }
+
+            try {
+                await deleteDoc(doc(db, 'videos', id));
+                showStatus('Video deleted successfully!', 'success');
+            } catch (error) {
+                console.error('Error deleting video:', error);
+                showStatus('Failed to delete video. Please try again.', 'error');
+            }
+        };
+
+        // Open video in YouTube
+        window.openVideo = function(url) {
+            window.open(url, '_blank');
+        };
+
+        // Render videos
+        function renderVideos() {
+            const container = document.getElementById('videosContainer');
+            
+            if (videosData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                        </svg>
+                        <h3>No videos yet</h3>
+                        <p>Add your first YouTube video to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const videosHTML = videosData.map(video => `
+                <div class="video-card" onclick="openVideo('${video.url}')">
+                    <img 
+                        src="${video.thumbnail}" 
+                        alt="${video.title}"
+                        class="video-thumbnail"
+                        onerror="this.src='https://via.placeholder.com/320x180/1a1a1a/666?text=Video'"
+                    />
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-date">${new Date(video.addedAt).toLocaleDateString()}</div>
+                        <button class="delete-btn" onclick="deleteVideo('${video.id}', event)">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `<div class="videos-grid">${videosHTML}</div>`;
+        }
+
+        // Listen to real-time updates
+        function setupRealtimeListener() {
+            const q = query(collection(db, 'videos'), orderBy('addedAt', 'desc'));
+            
+            onSnapshot(q, (snapshot) => {
+                videosData = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderVideos();
+            }, (error) => {
+                console.error('Error listening to videos:', error);
+                document.getElementById('videosContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Error loading videos</h3>
+                        <p>Please refresh the page to try again.</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Initialize app
+        async function initApp() {
+            try {
+                // Sign in anonymously
+                await signInAnonymously(auth);
+                console.log('Signed in anonymously');
+                
+                // Setup real-time listener
+                setupRealtimeListener();
+                
+                // Allow Enter key to add video
+                document.getElementById('videoUrl').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        addVideo();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                document.getElementById('videosContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Failed to initialize</h3>
+                        <p>Please check your internet connection and refresh the page.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Start the app
+        initApp();
+    </script>
+</body>
+</html>
